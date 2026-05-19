@@ -1,6 +1,6 @@
-#!/bin/bash
+﻿#!/bin/bash
 # Transmission Web Control – installation script
-# Fork: maintained at https://github.com/YOUR_FORK/transmission-web-control
+# Fork: maintained at https://github.com/Ratz77/transmission-web-control
 ARG1="$1"
 ROOT_FOLDER=""
 SCRIPT_NAME="$0"
@@ -13,8 +13,8 @@ ORG_INDEX_FILE="index.original.html"
 INDEX_FILE="index.html"
 TMP_FOLDER="/tmp/tr-web-control"
 PACK_NAME="master.tar.gz"
-WEB_HOST="https://github.com/ronggang/transmission-web-control/archive/"
-LAST_RELEASES="https://api.github.com/repos/ronggang/transmission-web-control/releases/latest"
+WEB_HOST="https://github.com/Ratz77/transmission-web-control/archive/"
+LAST_RELEASES="https://api.github.com/repos/Ratz77/transmission-web-control/releases/latest"
 DOWNLOAD_URL="$WEB_HOST$PACK_NAME"
 # 安装类型
 INSTALL_TYPE=-1
@@ -42,7 +42,7 @@ MSG_DOWNLOAD_FAILED="The installation package failed to download. Please try aga
 MSG_INSTALL_COMPLETE="Transmission Web Control Installation Completed!"
 MSG_PACK_EXTRACTING="Extracting installation package..."
 MSG_PACK_CLEANING_UP="Cleaning up the installation package..."
-MSG_DONE="Installation completed. See: https://github.com/ronggang/transmission-web-control/wiki"
+MSG_DONE="Installation completed. See: https://github.com/Ratz77/transmission-web-control/wiki"
 MSG_SETTING_PERMISSIONS="Setting permissions..."
 MSG_BEGIN="BEGIN"
 MSG_END="END"
@@ -506,9 +506,9 @@ downloadInstallScript() {
 	showLog "$MSG_DOWNLOADING_INSTALL_SCRIPT"
 	if [ -x "$(which curl)" ]; then
 		curl -L --fail -o "$SCRIPT_NAME" \
-			"https://github.com/ronggang/transmission-web-control/raw/master/release/$SCRIPT_NAME"
+			"https://github.com/Ratz77/transmission-web-control/raw/master/release/$SCRIPT_NAME"
 	else
-		wget "https://github.com/ronggang/transmission-web-control/raw/master/release/$SCRIPT_NAME" \
+		wget "https://github.com/Ratz77/transmission-web-control/raw/master/release/$SCRIPT_NAME" \
 			--no-check-certificate
 	fi
 	if [ $? -eq 0 ]; then

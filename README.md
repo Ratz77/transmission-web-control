@@ -1,51 +1,81 @@
-## 注意：项目不再维护
-> 因项目时间久远，所涉及的技术已过于陈旧，加上本人已没有精力在本项目上进行更新，现决定归档本项目，大家可以使用其他替代项目。
->
-> 如您还需要继续使用本项目，目前最好的方式是在 Docker 里使用 2.94 版本，然后设定环境变量指定WebUI，具体可参考（https://www.cnblogs.com/ronggang/p/18788723 ）；或者使用其他已集成的项目。
->
-> 感谢大家长期以来的支持。
-> 
-> 2025.06.01 栽培者 
-
-----
-
 <p align="center">
-<img src="https://github.com/ronggang/transmission-web-control/raw/master/src/tr-web-control/logo.png"><br/>
-<a href="https://github.com/ronggang/transmission-web-control/releases" title="GitHub Releases"><img src="https://img.shields.io/github/release/ronggang/transmission-web-control.svg"></a>
+<img src="https://github.com/Ratz77/transmission-web-control/raw/master/src/tr-web-control/logo.png"><br/>
+<a href="https://github.com/Ratz77/transmission-web-control/releases" title="GitHub Releases"><img src="https://img.shields.io/github/release/Ratz77/transmission-web-control.svg"></a>
 <img src="https://img.shields.io/badge/transmission-%3E=2.40%20(RPC%20%3E14)-green.svg" title="Support Transmission Version">
-<a href="https://github.com/ronggang/transmission-web-control/LICENSE" title="GitHub license"><img src="https://img.shields.io/github/license/ronggang/transmission-web-control.svg"></a>
-<a href="https://t.me/transmission_web_control"><img src="https://img.shields.io/badge/Telegram-Chat-blue.svg?logo=telegram" alt="Telegram"/></a>
+<img src="https://img.shields.io/badge/transmission%204.x-compatible-brightgreen.svg" title="Transmission 4.x compatible">
+<a href="https://github.com/Ratz77/transmission-web-control/blob/master/LICENSE" title="GitHub license"><img src="https://img.shields.io/github/license/Ratz77/transmission-web-control.svg"></a>
 </p>
 
 ----
-## [English Introduction](https://github.com/ronggang/transmission-web-control/wiki)
 
-## 国内镜像源
-- https://gitee.com/culturist/transmission-web-control
+# Transmission Web Control (fork mantenido)
 
-## 关于
-本项目主要目的是想加强[Transmission](https://www.transmissionbt.com/) Web的操作能力，本项目原本在[Google Code](https://code.google.com/p/transmission-control/)托管，现迁移至GitHub。
-本项目设计之初仅针对PT站，因此增加了 Tracker 服务器分组及状态，但这不并适用于普通BT种子。
+> **Fork de [ronggang/transmission-web-control](https://github.com/ronggang/transmission-web-control)**, proyecto archivado en 2025.
+> Este fork corrige la compatibilidad con **Transmission 4.x** (RPC v17/v18) y sigue recibiendo mantenimiento.
 
-另外，本项目仅为一套自定义的WebUI，不能代替 Transmission 工作，用户需要自行安装 Transmission 后才可正常使，Transmission 安装方法请移步至官网：https://www.transmissionbt.com/
+## Novedades respecto al original
 
-## 界面预览
-![screenshots](https://user-images.githubusercontent.com/8065899/38598199-0d2e684c-3d8e-11e8-8b21-3cd1f3c7580a.png)
+| Problema | Fix |
+|---|---|
+| Script de instalación falla en Transmission 4.0+ (`/web` no existe) | Detección automática de `public_html` vs `web` |
+| `trackerAdd`/`trackerReplace` deprecados en Transmission 4.0 (RPC v17) | Uso automático de `trackerList` en v17+ |
+| Campos snake_case en Transmission 4.1+ (RPC v18) rompen la UI | Capa de normalización que traduce snake_case → camelCase |
+| Valor de cifrado `"allowed"` no reconocido en el desplegable | Normalizado a `"tolerated"` internamente |
+| `cache-size-mb` renombrado a `cache-size-mib` en 4.1+ | Mapeado al campo legacy para la UI |
+| Crash en trackers con `lastAnnounceResult` nulo | Comprobación defensiva añadida |
 
-## 安装方法及更多内容，请参考：[中文帮助](https://github.com/ronggang/transmission-web-control/wiki/Home-CN) 
-### DSM7.0
-在这个版本中，需要额外修改权限以实现自动更新的功能
-在 `root` 权限下执行以下命令，其中：
- - `YOUR_USERNAME` 替换为你登录和更新脚本时候选择的用户
- - `/var/packages/transmission/target/share/transmission/web/` 这串路径为 transmission 的安装路径（默认应该是这个）
-```shell
-sed -i '/sc-transmission/s/$/YOUR_USERNAME/' /etc/group
-chown sc-transmission:sc-transmission /var/packages/transmission/target/share/transmission/web/* -R
-chmod 774 /var/packages/transmission/target/share/transmission/web/* -R
+## Instalación
+
+El método de instalación es el mismo que el original. Ejecuta en tu servidor:
+
+```bash
+# Método recomendado (curl)
+bash <(curl -s https://raw.githubusercontent.com/Ratz77/transmission-web-control/master/release/install-tr-control.sh)
 ```
 
-## 更新日志 [查看](https://github.com/ronggang/transmission-web-control/blob/master/CHANGELOG.md)
+```bash
+# Alternativa (wget)
+wget https://raw.githubusercontent.com/Ratz77/transmission-web-control/master/release/install-tr-control.sh
+bash install-tr-control.sh
+```
 
-## 项目日常维护
-* 栽培者
-* DarkAlexWang
+El script detecta automáticamente si tu Transmission usa `/web` (≤3.x) o `/public_html` (≥4.0).
+
+### Instalación automática (sin menú)
+
+```bash
+bash install-tr-control.sh auto
+```
+
+### Versiones soportadas
+
+| Transmission | RPC | Estado |
+|---|---|---|
+| 2.40 – 3.00 | v14 – v16 | ✅ Soportado |
+| 4.0.x | v17 | ✅ Soportado |
+| 4.1.x | v18 | ✅ Soportado |
+| 4.2.x | v18.1 | ✅ Soportado |
+
+## Previsualización
+
+![screenshots](https://user-images.githubusercontent.com/8065899/38598199-0d2e684c-3d8e-11e8-8b21-3cd1f3c7580a.png)
+
+## Acerca de
+
+Este proyecto mejora la interfaz web de [Transmission](https://www.transmissionbt.com/) añadiendo:
+- Agrupación y estado de trackers
+- Gestión avanzada de torrents
+- Soporte multidioma
+- Temas visuales
+
+Transmission debe instalarse por separado: https://www.transmissionbt.com/
+
+## Changelog
+
+Ver [CHANGELOG.md](CHANGELOG.md) para el historial de cambios del proyecto original.
+Los cambios de este fork están documentados en los mensajes de commit.
+
+## Créditos
+
+- Proyecto original: [ronggang](https://github.com/ronggang) y colaboradores
+- Fork mantenido por: [Ratz77](https://github.com/Ratz77)
