@@ -15,7 +15,7 @@
 
 ## Novedades respecto al original
 
-| Problema | Fix |
+| Problema / Mejora | Fix / Nueva función |
 |---|---|
 | Script de instalación falla en Transmission 4.0+ (`/web` no existe) | Detección automática de `public_html` vs `web` |
 | `trackerAdd`/`trackerReplace` deprecados en Transmission 4.0 (RPC v17) | Uso automático de `trackerList` en v17+ |
@@ -23,6 +23,8 @@
 | Valor de cifrado `"allowed"` no reconocido en el desplegable | Normalizado a `"tolerated"` internamente |
 | `cache-size-mb` renombrado a `cache-size-mib` en 4.1+ | Mapeado al campo legacy para la UI |
 | Crash en trackers con `lastAnnounceResult` nulo | Comprobación defensiva añadida |
+| **Interfaz móvil**: no era posible subir ficheros `.torrent` | Nuevo selector de fichero + envío por base64 vía RPC |
+| Despliegue con Docker | `docker-compose.yml` y `Dockerfile` incluidos |
 
 ## Instalación
 
