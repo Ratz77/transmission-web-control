@@ -2,9 +2,9 @@
 	移动版
 */
 var system = {
-	version: "1.6.0 beta",
+	version: "1.6.1-fork",
 	rootPath: "tr-web-control/",
-	codeupdate: "20180906",
+	codeupdate: "20250519",
 	configHead: "transmission-web-control",
 	config: {
 		autoReload: true,
@@ -134,23 +134,26 @@ var system = {
 			system.getServerStatus();
 		});
 	},
-	// 重新加载服务器信息		
+	// 重新加载服务器信息
 	reloadSession: function (isinit) {
 		transmission.getSession(function (result) {
 			system.serverConfig = result;
-			if (result["alt-speed-enabled"] == true) {
+			var altSpeedEnabled = result["alt-speed-enabled"];
+			if (altSpeedEnabled === undefined) altSpeedEnabled = result["alt_speed_enabled"];
+			if (altSpeedEnabled == true) {
 				$("#status_alt_speed").show();
 			} else {
 				$("#status_alt_speed").hide();
 			}
 
-			system.downloadDir = result["download-dir"];
+			system.downloadDir = result["download-dir"] || result["download_dir"] || "";
 
-			// rpc-version 版本为 15 起，不再提供 download-dir-free-space 参数，需从新的方法获取
-			if (parseInt(system.serverConfig["rpc-version"]) >= 15) {
-				transmission.getFreeSpace(system.downloadDir, function (result) {
-					system.serverConfig["download-dir-free-space"] = result.arguments["size-bytes"];
-					system.showFreeSpace(result.arguments["size-bytes"]);
+			var rpcVersion = parseInt(result["rpc-version"] || result["rpc_version"] || 0);
+			if (rpcVersion >= 15) {
+				transmission.getFreeSpace(system.downloadDir, function (data) {
+					var freeBytes = data.arguments ? (data.arguments["size-bytes"] || data.arguments["size_bytes"] || -1) : -1;
+					system.serverConfig["download-dir-free-space"] = freeBytes;
+					system.showFreeSpace(freeBytes);
 				});
 			} else {
 				system.showFreeSpace(system.serverConfig["download-dir-free-space"]);

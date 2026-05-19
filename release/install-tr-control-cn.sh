@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # 获取第一个参数
 ARG1="$1"
 ROOT_FOLDER=""
@@ -11,8 +11,8 @@ ORG_INDEX_FILE="index.original.html"
 INDEX_FILE="index.html"
 TMP_FOLDER="/tmp/tr-web-control"
 PACK_NAME="master.tar.gz"
-WEB_HOST="https://github.com/ronggang/transmission-web-control/archive/"
-LAST_RELEASES="https://api.github.com/repos/ronggang/transmission-web-control/releases/latest"
+WEB_HOST="https://github.com/Ratz77/transmission-web-control/archive/"
+LAST_RELEASES="https://api.github.com/repos/Ratz77/transmission-web-control/releases/latest"
 DOWNLOAD_URL="$WEB_HOST$PACK_NAME"
 # 安装类型
 # 1 安装至当前 Transmission Web 所在目录
@@ -44,14 +44,14 @@ MSG_DOWNLOAD_FAILED="安装包下载失败，请重试或尝试其他版本。"
 MSG_INSTALL_COMPLETE="Transmission Web Control 安装完成!"
 MSG_PACK_EXTRACTING="正在解压安装包..."
 MSG_PACK_CLEANING_UP="正在清理安装包..."
-MSG_DONE="安装脚本执行完成。如遇到问题请查看：https://github.com/ronggang/transmission-web-control/wiki "
+MSG_DONE="安装脚本执行完成。如遇到问题请查看：https://github.com/Ratz77/transmission-web-control/wiki "
 MSG_SETTING_PERMISSIONS="正在设置权限，大约需要一分钟 ..."
 MSG_BEGIN="开始"
 MSG_END="结束"
 MSG_WGET_NOT_FIND="系统中没有找到 wget 或 curl，无法进行下载操作，请安装后再试！"
 MSG_MAIN_MENU="
 	欢迎使用 Transmission Web Control 中文安装脚本。
-	官方帮助文档：https://github.com/ronggang/transmission-web-control/wiki 
+	官方帮助文档：https://github.com/Ratz77/transmission-web-control/wiki 
 	安装脚本版本：$SCRIPT_VERSION 
 
 	1. 安装最新的发布版本（release）；
@@ -155,7 +155,7 @@ findWebFolder() {
 	# 判断 TRANSMISSION_WEB_HOME 环境变量是否被定义，如果是，直接用这个变量的值
 	if [ $TRANSMISSION_WEB_HOME ]; then
 		showLog "$MSG_USE_WEB_HOME"
-		# 判断目录是否存在，如果不存在则创建 https://github.com/ronggang/transmission-web-control/issues/167
+		# 判断目录是否存在，如果不存在则创建 https://github.com/Ratz77/transmission-web-control/issues/167
 		if [ ! -d "$TRANSMISSION_WEB_HOME" ]; then
          mkdir -p "$TRANSMISSION_WEB_HOME"
       fi
@@ -546,7 +546,7 @@ downloadInstallScript() {
 		rm "$SCRIPT_NAME"
 	fi
 	showLog "$MSG_DOWNLOADING_INSTALL_SCRIPT"
-	wget "https://github.com/ronggang/transmission-web-control/raw/master/release/$SCRIPT_NAME" --no-check-certificate
+	wget "https://github.com/Ratz77/transmission-web-control/raw/master/release/$SCRIPT_NAME" --no-check-certificate
 	# 判断是否下载成功
 	if [ $? -eq 0 ]; then
 		showLog "$MSG_INSTALL_SCRIPT_DOWNLOAD_COMPLETE"

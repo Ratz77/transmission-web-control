@@ -21,9 +21,9 @@
 	<!-- System class library -->
 	<script type="text/javascript" src="tr-web-control/script/min/public.min.js?v=20180906"></script>
 	<script type="text/javascript" src="tr-web-control/script/other/ua-parser.min.js?v=20170522"></script>
-	<script type="text/javascript" src="tr-web-control/script/min/transmission.min.js?v=20180906"></script>
-	<script type="text/javascript" src="tr-web-control/script/min/transmission.torrents.min.js?v=20180906"></script>
-	<script type="text/javascript" src="tr-web-control/script/min/system.mobile.min.js?v=20180906"></script>
+	<script type="text/javascript" src="tr-web-control/script/transmission.js?v=20250519"></script>
+	<script type="text/javascript" src="tr-web-control/script/transmission.torrents.js?v=20250519"></script>
+	<script type="text/javascript" src="tr-web-control/script/system.mobile.js?v=20250519"></script>
 </head>
 <body>
 	<!-- Home -->
@@ -100,8 +100,12 @@
 			</div>
 			<!-- 添加种子 -->
 			<div id="content-add-torrent" style="padding:15px;display:none;">
+				<label for="torrent-file" system-lang="dialog['torrent-add']['torrent-file']"></label>
+				<input type="file" id="torrent-file" accept=".torrent" style="margin-bottom:10px;"/>
+				<button onclick="addFile();" style="margin-bottom:15px;"><label system-lang="dialog['torrent-add']['button-add-file']"></label></button>
+				<hr/>
 				<label for="torrent-url" system-lang="dialog['torrent-add']['torrent-url']"></label>
-				<textarea id="torrent-url" style="height:130px;"></textarea>
+				<textarea id="torrent-url" style="height:100px;"></textarea>
 				<label for="download-dir" system-lang="dialog['torrent-add']['download-dir']"></label>
 				<input id="download-dir"/>
                 <label for="used-download-dir" system-lang="dialog['torrent-add']['used-download-dir']"></label>
@@ -184,6 +188,26 @@
         $usedDownloadDir.val(system.downloadDir).selectmenu('refresh', true);
 
 	}
+	function addFile()
+	{
+		var fileInput = document.getElementById("torrent-file");
+		if (!fileInput.files || fileInput.files.length === 0) {
+			$(fileInput).fadeOut("fast").fadeIn("fast").fadeOut("fast").fadeIn("fast");
+			return;
+		}
+		var autostart = ($("#autostart").val() == "true" ? true : false);
+		var savepath = $("#download-dir").val();
+		var files = Array.prototype.slice.call(fileInput.files);
+		var total = files.length;
+		files.forEach(function(file) {
+			transmission.addTorrentFromFile(file, savepath, !autostart, function(added) {
+				system.reloadTorrentBaseInfos();
+			}, total);
+		});
+		fileInput.value = "";
+		system.showContent('home');
+	}
+
 	function addUrl()
 	{
 		var urls = $("#torrent-url").val();

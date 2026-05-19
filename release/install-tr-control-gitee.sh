@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # 获取第一个参数
 ARG1="$1"
 ROOT_FOLDER=""
@@ -44,14 +44,14 @@ MSG_DOWNLOAD_FAILED="安装包下载失败，请重试或尝试其他版本。"
 MSG_INSTALL_COMPLETE="Transmission Web Control 安装完成!"
 MSG_PACK_EXTRACTING="正在解压安装包..."
 MSG_PACK_CLEANING_UP="正在清理安装包..."
-MSG_DONE="安装脚本执行完成。如遇到问题请查看：https://github.com/ronggang/transmission-web-control/wiki "
+MSG_DONE="安装脚本执行完成。如遇到问题请查看：https://github.com/Ratz77/transmission-web-control/wiki "
 MSG_SETTING_PERMISSIONS="正在设置权限，大约需要一分钟 ..."
 MSG_BEGIN="开始"
 MSG_END="结束"
 MSG_WGET_NOT_FIND="系统中没有找到 wget 或 curl，无法进行下载操作，请安装后再试！"
 MSG_MAIN_MENU="
 	欢迎使用 Transmission Web Control 中文仓库安装脚本。
-	官方帮助文档：https://github.com/ronggang/transmission-web-control/wiki 
+	官方帮助文档：https://github.com/Ratz77/transmission-web-control/wiki 
 	安装脚本版本：$SCRIPT_VERSION gitee 仓库版
 
 	1. 安装最新的发布版本（release）；
@@ -156,7 +156,7 @@ findWebFolder() {
 	# 判断 TRANSMISSION_WEB_HOME 环境变量是否被定义，如果是，直接用这个变量的值
 	if [ $TRANSMISSION_WEB_HOME ]; then
 		showLog "$MSG_USE_WEB_HOME"
-		# 判断目录是否存在，如果不存在则创建 https://github.com/ronggang/transmission-web-control/issues/167
+		# 判断目录是否存在，如果不存在则创建 https://github.com/Ratz77/transmission-web-control/issues/167
 		if [ ! -d "$TRANSMISSION_WEB_HOME" ]; then
          mkdir -p "$TRANSMISSION_WEB_HOME"
       fi

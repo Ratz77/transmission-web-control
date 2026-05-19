@@ -56,6 +56,35 @@ bash install-tr-control.sh auto
 | 4.1.x | v18 | ✅ Soportado |
 | 4.2.x | v18.1 | ✅ Soportado |
 
+## Docker
+
+### Opción A — docker-compose (recomendado)
+
+Monta el directorio `src/` directamente en el contenedor. Cualquier cambio en los ficheros se refleja sin reconstruir la imagen.
+
+```bash
+docker compose up -d
+```
+
+La interfaz estará disponible en `http://localhost:9091`.
+
+Ajusta `TZ` en [`docker-compose.yml`](docker-compose.yml) con tu zona horaria si lo necesitas.
+
+### Opción B — imagen propia (Dockerfile)
+
+Construye una imagen autocontenida con la UI incluida:
+
+```bash
+docker build -t transmission-web-control .
+docker run -d \
+  -e PUID=1000 -e PGID=1000 \
+  -p 9091:9091 -p 51413:51413 -p 51413:51413/udp \
+  -v ./config:/config \
+  -v ./downloads:/downloads \
+  --name transmission \
+  transmission-web-control
+```
+
 ## Previsualización
 
 ![screenshots](https://user-images.githubusercontent.com/8065899/38598199-0d2e684c-3d8e-11e8-8b21-3cd1f3c7580a.png)

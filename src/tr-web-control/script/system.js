@@ -1,4 +1,4 @@
-// Current system global object
+﻿// Current system global object
 var system = {
 	version: "1.6.1-fork",
 	rootPath: "tr-web-control/",
@@ -59,7 +59,7 @@ var system = {
 	dictionary: {
 		folders: null
 	},
-	checkUpdateScript: "https://api.github.com/repos/ronggang/transmission-web-control/releases/latest", // kept for upstream check
+	checkUpdateScript: "https://api.github.com/repos/Ratz77/transmission-web-control/releases/latest", // kept for upstream check
 	contextMenus: {},
 	panel: null,
 	lang: null,
@@ -3267,9 +3267,9 @@ var system = {
 						var html = result.body.replace(/\r\n/g,"<br/>");
 
 						var toolbar = $("<div style='text-align:right;'/>").appendTo(content);
-						$('<a href="https://github.com/ronggang/transmission-web-control/releases/latest" target="_blank" class="easyui-linkbutton" data-options="iconCls:\'iconfont tr-icon-github\'"/>').html(result.name + " ("+update+")").appendTo(toolbar).linkbutton();
+						$('<a href="https://github.com/Ratz77/transmission-web-control/releases/latest" target="_blank" class="easyui-linkbutton" data-options="iconCls:\'iconfont tr-icon-github\'"/>').html(result.name + " ("+update+")").appendTo(toolbar).linkbutton();
 						$("<span/>").html(" ").appendTo(toolbar);
-						$('<a href="https://github.com/ronggang/transmission-web-control/wiki" target="_blank" class="easyui-linkbutton" data-options="iconCls:\'iconfont tr-icon-help\'"/>').html(system.lang["public"]["text-how-to-update"]).appendTo(toolbar).linkbutton();
+						$('<a href="https://github.com/Ratz77/transmission-web-control/wiki" target="_blank" class="easyui-linkbutton" data-options="iconCls:\'iconfont tr-icon-help\'"/>').html(system.lang["public"]["text-how-to-update"]).appendTo(toolbar).linkbutton();
 						$("<span/>").html(" ").appendTo(toolbar);
 						$('<button onclick="javascript:system.addIgnoreVersion(\''+version+'\');" class="easyui-linkbutton" data-options="iconCls:\'iconfont tr-icon-cancel-checked\'"/>').html(system.lang["public"]["text-ignore-this-version"]).appendTo(toolbar).linkbutton();
 						$("<hr/>").appendTo(content);

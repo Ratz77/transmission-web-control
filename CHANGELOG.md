@@ -1,4 +1,4 @@
-# 更新日志
+﻿# 更新日志
 ## [English](CHANGELOG-EN.md)
 ### 2018.03.30 v1.5.1-update2
 * 修复
@@ -19,7 +19,7 @@
 ### 2018.03.28 v1.5.1
 #### 注意：从该版本起将启用新的更新地址，请重新下载安装脚本。 
 
-https://github.com/ronggang/transmission-web-control/blob/master/release/install-tr-control.sh
+https://github.com/Ratz77/transmission-web-control/blob/master/release/install-tr-control.sh
 
 * [-] 删除 master 下的 src.tar.gz 文件，以后本仓库下不再保存打包文件；
 
