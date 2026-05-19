@@ -1,8 +1,8 @@
 // Current system global object
 var system = {
-	version: "1.6.1",
+	version: "1.6.1-fork",
 	rootPath: "tr-web-control/",
-	codeupdate: "20200913",
+	codeupdate: "20250519",
 	configHead: "transmission-web-control",
 	// default config, can be customized in config.js
 	config: {
@@ -59,7 +59,7 @@ var system = {
 	dictionary: {
 		folders: null
 	},
-	checkUpdateScript: "https://api.github.com/repos/ronggang/transmission-web-control/releases/latest",
+	checkUpdateScript: "https://api.github.com/repos/ronggang/transmission-web-control/releases/latest", // kept for upstream check
 	contextMenus: {},
 	panel: null,
 	lang: null,
@@ -1613,11 +1613,26 @@ var system = {
 	// Reload the server information
 	reloadSession: function (isinit) {
 		transmission.getSession(function (result) {
+			// transmission.getSession() already calls _normalizeSessionData(), so
+			// result always has the hyphenated keys the rest of the code expects.
 			system.serverConfig = result;
+
+			// RPC version (prefer hyphenated form; snake_case is a fallback in case
+			// of a partial normalisation path)
+			var rpcVer = result["rpc-version"] || result["rpc_version"] || 0;
+			var trVer  = result["version"] || "";
+
 			// Version Information
-			$("#status_version").html("Transmission " + system.lang.statusbar.version + result["version"] + ", RPC: " + result["rpc-version"] +
-				", WEB Control: " + system.version + "(" + system.codeupdate + ")");
-			if (result["alt-speed-enabled"] == true) {
+			$("#status_version").html(
+				"Transmission " + system.lang.statusbar.version + trVer +
+				", RPC: " + rpcVer +
+				", WEB Control: " + system.version + " (" + system.codeupdate + ")"
+			);
+
+			// Support both key forms for alt-speed in case of incomplete normalisation
+			var altSpeedEnabled = result["alt-speed-enabled"];
+			if (altSpeedEnabled === undefined) altSpeedEnabled = result["alt_speed_enabled"];
+			if (altSpeedEnabled == true) {
 				system.panel.toolbar.find("#toolbar_alt_speed").linkbutton({
 					iconCls: "iconfont tr-icon-woniu"
 				});
@@ -1629,21 +1644,23 @@ var system = {
 				$("#status_alt_speed").hide();
 			}
 
-			system.downloadDir = result["download-dir"];
+			system.downloadDir = result["download-dir"] || result["download_dir"] || "";
 
-			// Always push default download dir to the Dirs array
 			if (transmission.downloadDirs.length == 0) {
 				transmission.downloadDirs.push(system.downloadDir);
 			}
 
-			// Rpc-version version 15, no longer provide download-dir-free-space parameters, to be obtained from the new method
-			if (parseInt(system.serverConfig["rpc-version"]) >= 15) {
+			// RPC v15+: download-dir-free-space no longer in session-get; use free-space method
+			if (parseInt(rpcVer, 10) >= 15) {
 				transmission.getFreeSpace(system.downloadDir, function (datas) {
-					system.serverConfig["download-dir-free-space"] = datas.arguments["size-bytes"];
-					system.showFreeSpace(datas.arguments["size-bytes"]);
+					// The free-space response key changed to size_bytes in v18+
+					var freeBytes = (datas.arguments && (datas.arguments["size-bytes"] || datas.arguments["size_bytes"])) || -1;
+					system.serverConfig["download-dir-free-space"] = freeBytes;
+					system.showFreeSpace(freeBytes);
 				});
 			} else {
-				system.showFreeSpace(system.serverConfig["download-dir-free-space"]);
+				var legacy = result["download-dir-free-space"] || result["download_dir_free_space"] || -1;
+				system.showFreeSpace(legacy);
 			}
 
 			if (isinit) {

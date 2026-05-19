@@ -3,9 +3,9 @@
 ARG1="$1"
 ROOT_FOLDER=""
 SCRIPT_NAME="$0"
-SCRIPT_VERSION="1.2.5"
+SCRIPT_VERSION="1.3.0-fork"
 VERSION=""
-HTML_FOLDER_NAME="web"
+HTML_FOLDER_NAME=""   # auto-detected: "web" (Tr ≤3.x) or "public_html" (Tr ≥4.0)
 WEB_FOLDER=""
 ORG_INDEX_FILE="index.original.html"
 INDEX_FILE="index.html"
@@ -402,6 +402,28 @@ showMainMenu() {
 	esac
 }
 
+# 检测正确的 web UI 子目录名称 (Transmission ≥4.0 使用 public_html，旧版使用 web)
+detectHtmlFolderName() {
+	local base="$1"
+	if [ -d "$base/public_html" ]; then
+		HTML_FOLDER_NAME="public_html"
+	elif [ -d "$base/web" ]; then
+		HTML_FOLDER_NAME="web"
+	else
+		local tr_version=""
+		if [ -x "$(which transmission-daemon)" ]; then
+			tr_version=$(transmission-daemon --version 2>&1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
+		fi
+		local tr_major=${tr_version%%.*}
+		if [ -n "$tr_major" ] && [ "$tr_major" -ge 4 ] 2>/dev/null; then
+			HTML_FOLDER_NAME="public_html"
+		else
+			HTML_FOLDER_NAME="web"
+		fi
+	fi
+	showLog "检测到 web UI 目录名称: $HTML_FOLDER_NAME"
+}
+
 # 获取Tr所在的目录
 getTransmissionPath() {
 	# 指定一次当前系统的默认目录
@@ -413,41 +435,46 @@ getTransmissionPath() {
 		if [ -f "/etc/fedora-release" ] || [ -f "/etc/debian_version" ] || [ -f "/etc/openwrt_release" ]; then
 			ROOT_FOLDER="/usr/share/transmission"
 		fi
-		
+
 		if [ -f "/bin/freebsd-version" ]; then
 			ROOT_FOLDER="/usr/local/share/transmission"
 		fi
 
-		# 群晖
+		# 群晖 – Tr 2.x 使用 web，3.x+ 使用 public_html
 		if [ -f "/etc/synoinfo.conf" ]; then
-			# 开始检测TR版本，用于判断ui存放目录
 			TRANSMISSION_REMOTE="/var/packages/transmission/target/bin/transmission-remote"
-
-			if [[ -x "$TRANSMISSION_REMOTE" ]]; then
+			if [ -x "$TRANSMISSION_REMOTE" ]; then
+				local tr_version
 				tr_version=$("$TRANSMISSION_REMOTE" -V 2>&1 | cut -d " " -f 2)
 				showLog "transmission version: $tr_version"
-				# 判断 TR 主版本号
-				if [ ${tr_version:0:1} = 2 ]; then
-					HTML_FOLDER_NAME="web"
-				else
+				local tr_major=${tr_version%%.*}
+				if [ -n "$tr_major" ] && [ "$tr_major" -ge 3 ] 2>/dev/null; then
 					HTML_FOLDER_NAME="public_html"
+				else
+					HTML_FOLDER_NAME="web"
 				fi
 			fi
-
 			ROOT_FOLDER="/var/packages/transmission/target/share/transmission"
 		fi
 	fi
 
+	# 若 ROOT_FOLDER 已找到但 HTML_FOLDER_NAME 尚未确定，则自动检测
+	if [ -d "$ROOT_FOLDER" ] && [ -z "$HTML_FOLDER_NAME" ]; then
+		detectHtmlFolderName "$ROOT_FOLDER"
+	fi
+
 	if [ ! -d "$ROOT_FOLDER" ]; then
 		showLog "$MSG_FIND_WEB_FOLDER_FROM_PROCESS" "n"
-		infos=`ps -Aww -o command= | sed -r -e '/[t]ransmission-da/!d' -e 's/ .+//'`
-		if [ "$infos" != "" ]; then
+		local infos
+		infos=$(ps -Aww -o command= 2>/dev/null | sed -r -e '/[t]ransmission-da/!d' -e 's/ .+//')
+		if [ -n "$infos" ]; then
 			echo " √"
-			search="bin/transmission-daemon"
-			replace="share/transmission"
-			path=${infos//$search/$replace}
+			local search="bin/transmission-daemon"
+			local replace="share/transmission"
+			local path="${infos//$search/$replace}"
 			if [ -d "$path" ]; then
-				ROOT_FOLDER=$path
+				ROOT_FOLDER="$path"
+				detectHtmlFolderName "$ROOT_FOLDER"
 			fi
 		else
 			echo "$MSG_FIND_WEB_FOLDER_FROM_PROCESS_FAILED"

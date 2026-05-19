@@ -1,8 +1,8 @@
 // transmission RPC 操作类
-// 栽培者
 var transmission = {
 	SessionId: "",
 	isInitialized: false,
+	rpcVersion: 0,       // populated after session-get; used for version-aware API calls
 	host: "",
 	port: "9091",
 	path: "/transmission/rpc",
@@ -42,6 +42,7 @@ var transmission = {
 	islocal: false,
 	// The list of directories that currently exist
 	downloadDirs: new Array(),
+
 	getSessionId: function(me, callback) {
 		var settings = {
 			type: "POST",
@@ -58,32 +59,19 @@ var transmission = {
 				}
 			},
 			headers: this.headers
-
 		};
 		jQuery.ajax(settings);
 	},
+
 	init: function(config, callback) {
 		jQuery.extend(this, config);
-
-		/*
-		if (this.fullpath=="")
-		{
-			this.fullpath = this.host + (this.port?":"+this.port:"") + this.path;
-		}*/
 		if (this.username && this.password) {
 			this.headers["Authorization"] = "Basic " + (new Base64()).encode(this.username + ":" + this.password);
 		}
-
 		this.fullpath = this.rpcpath;
 		this.getSessionId(this, callback);
 	},
-	/**
-	 * 执行指定的命令
-	 * @param  {[type]}   config   [description]
-	 * @param  {Function} callback [description]
-	 * @param  {[type]}   tags     [description]
-	 * @return {[type]}            [description]
-	 */
+
 	exec: function(config, callback, tags) {
 		if (!this.isInitialized) {
 			return false;
@@ -93,7 +81,6 @@ var transmission = {
 			arguments: {},
 			tag: ""
 		};
-
 		jQuery.extend(data, config);
 
 		var settings = {
@@ -122,39 +109,160 @@ var transmission = {
 		};
 		jQuery.ajax(settings);
 	},
+
+	// ─── session normalization ────────────────────────────────────────────────
+	// RPC v18 (Transmission 4.1+) switched all field names to snake_case.
+	// To keep the rest of the codebase working unchanged, we remap the new
+	// snake_case/underscore keys back to the hyphenated/camelCase forms that
+	// system.js and other modules expect.
+	_normalizeSessionData: function(data) {
+		if (!data || typeof data !== 'object') return data;
+
+		// session-get: hyphenated → snake_case remaps
+		var sessionMap = {
+			'rpc_version':                  'rpc-version',
+			'rpc_version_minimum':          'rpc-version-minimum',
+			'rpc_version_semver':           'rpc-version-semver',
+			'version':                      'version', // unchanged
+			'alt_speed_down':               'alt-speed-down',
+			'alt_speed_enabled':            'alt-speed-enabled',
+			'alt_speed_time_begin':         'alt-speed-time-begin',
+			'alt_speed_time_day':           'alt-speed-time-day',
+			'alt_speed_time_enabled':       'alt-speed-time-enabled',
+			'alt_speed_time_end':           'alt-speed-time-end',
+			'alt_speed_up':                 'alt-speed-up',
+			'blocklist_enabled':            'blocklist-enabled',
+			'blocklist_size':               'blocklist-size',
+			'blocklist_url':                'blocklist-url',
+			'cache_size_mb':                'cache-size-mb',   // v18 renames to cache_size_mib
+			'cache_size_mib':               'cache-size-mb',   // normalise both to the old key
+			'config_dir':                   'config-dir',
+			'dht_enabled':                  'dht-enabled',
+			'download_dir':                 'download-dir',
+			'download_dir_free_space':      'download-dir-free-space',
+			'download_queue_enabled':       'download-queue-enabled',
+			'download_queue_size':          'download-queue-size',
+			'encryption':                   'encryption',
+			'idle_seeding_limit':           'idle-seeding-limit',
+			'idle_seeding_limit_enabled':   'idle-seeding-limit-enabled',
+			'incomplete_dir':               'incomplete-dir',
+			'incomplete_dir_enabled':       'incomplete-dir-enabled',
+			'lpd_enabled':                  'lpd-enabled',
+			'peer_limit_global':            'peer-limit-global',
+			'peer_limit_per_torrent':       'peer-limit-per-torrent',
+			'peer_port':                    'peer-port',
+			'peer_port_random_on_start':    'peer-port-random-on-start',
+			'pex_enabled':                  'pex-enabled',
+			'port_forwarding_enabled':      'port-forwarding-enabled',
+			'queue_stalled_enabled':        'queue-stalled-enabled',
+			'queue_stalled_minutes':        'queue-stalled-minutes',
+			'rename_partial_files':         'rename-partial-files',
+			'script_torrent_added_enabled':          'script-torrent-added-enabled',
+			'script_torrent_added_filename':         'script-torrent-added-filename',
+			'script_torrent_done_enabled':           'script-torrent-done-enabled',
+			'script_torrent_done_filename':          'script-torrent-done-filename',
+			'script_torrent_done_seeding_enabled':   'script-torrent-done-seeding-enabled',
+			'script_torrent_done_seeding_filename':  'script-torrent-done-seeding-filename',
+			'seed_queue_enabled':           'seed-queue-enabled',
+			'seed_queue_size':              'seed-queue-size',
+			'session_id':                   'session-id',
+			'speed_limit_down':             'speed-limit-down',
+			'speed_limit_down_enabled':     'speed-limit-down-enabled',
+			'speed_limit_up':               'speed-limit-up',
+			'speed_limit_up_enabled':       'speed-limit-up-enabled',
+			'start_added_torrents':         'start-added-torrents',
+			'trash_original_torrent_files': 'trash-original-torrent-files',
+			'units':                        'units',
+			'utp_enabled':                  'utp-enabled',
+			'default_trackers':             'default-trackers',
+			'tcp_enabled':                  'tcp-enabled',
+			'sequential_download':          'sequential-download'
+		};
+
+		// If at least one known snake_case key is present, map everything
+		var needsMapping = false;
+		for (var snakeKey in sessionMap) {
+			if (data.hasOwnProperty(snakeKey)) { needsMapping = true; break; }
+		}
+		if (!needsMapping) return data;
+
+		for (var sk in sessionMap) {
+			var hk = sessionMap[sk];
+			if (data.hasOwnProperty(sk)) {
+				if (!data.hasOwnProperty(hk)) {
+					data[hk] = data[sk];
+				}
+			}
+		}
+
+		// Transmission 4.1+ (RPC v18) renamed the encryption value "tolerated" → "allowed".
+		// Map it back so the UI dropdown (which uses "tolerated") still shows the right selection.
+		if (data['encryption'] === 'allowed') {
+			data['encryption'] = 'tolerated';
+		}
+
+		return data;
+	},
+
+	// session-stats: camelCase → snake_case remaps (v18+)
+	_normalizeStatsData: function(data) {
+		if (!data || typeof data !== 'object') return data;
+		var map = {
+			'torrent_count':        'torrentCount',
+			'active_torrent_count': 'activeTorrentCount',
+			'paused_torrent_count': 'pausedTorrentCount',
+			'download_speed':       'downloadSpeed',
+			'upload_speed':         'uploadSpeed'
+		};
+		for (var sk in map) {
+			var ck = map[sk];
+			if (data.hasOwnProperty(sk) && !data.hasOwnProperty(ck)) {
+				data[ck] = data[sk];
+			}
+		}
+		return data;
+	},
+
+	// ─── public API ──────────────────────────────────────────────────────────
 	getStatus: function(callback) {
 		this.exec({
 			method: "session-stats"
 		}, function(data) {
 			if (data.result == "success") {
+				var args = transmission._normalizeStatsData(data.arguments);
 				if (callback) {
-					callback(data.arguments);
+					callback(args);
 				}
-
-				if (transmission.torrents.count != data.arguments.torrentCount || transmission.torrents.activeTorrentCount != data.arguments.activeTorrentCount || transmission.torrents.pausedTorrentCount != data.arguments.pausedTorrentCount) {
-					// Current total number of torrents
-					transmission.torrents.count = data.arguments.torrentCount;
-					transmission.torrents.activeTorrentCount = data.arguments.activeTorrentCount;
-					transmission.torrents.pausedTorrentCount = data.arguments.pausedTorrentCount;
+				if (transmission.torrents.count != args.torrentCount ||
+					transmission.torrents.activeTorrentCount != args.activeTorrentCount ||
+					transmission.torrents.pausedTorrentCount != args.pausedTorrentCount) {
+					transmission.torrents.count = args.torrentCount;
+					transmission.torrents.activeTorrentCount = args.activeTorrentCount;
+					transmission.torrents.pausedTorrentCount = args.pausedTorrentCount;
 					transmission._onTorrentCountChange();
 				}
 			}
 		});
 	},
+
 	getSession: function(callback) {
 		this.exec({
 			method: "session-get"
 		}, function(data) {
 			if (data.result == "success") {
+				var normalized = transmission._normalizeSessionData(data.arguments);
+				// Track RPC version for version-aware calls
+				var rv = normalized["rpc-version"] || normalized["rpc_version"] || 0;
+				transmission.rpcVersion = parseInt(rv, 10) || 0;
 				if (callback) {
-					callback(data.arguments);
+					callback(normalized);
 				}
 			}
 		});
 	},
+
 	// 添加种子
 	addTorrentFromUrl: function(url, savepath, autostart, callback) {
-		// 磁性连接（代码来自原版WEBUI）
 		if (url.match(/^[0-9a-f]{40}$/i)) {
 			url = 'magnet:?xt=urn:btih:' + url;
 		}
@@ -165,51 +273,39 @@ var transmission = {
 				paused: (!autostart)
 			}
 		};
-
 		if (savepath) {
 			options.arguments["download-dir"] = savepath;
 		}
 		this.exec(options, function(data) {
 			switch (data.result) {
-				// 添加成功
 				case "success":
 					if (callback) {
-						if (data.arguments["torrent-added"]) {
-							callback(data.arguments["torrent-added"]);
+						// Support both camelCase (old) and snake_case (v18+) response keys
+						var added = data.arguments["torrent-added"] || data.arguments["torrent_added"];
+						var dupe  = data.arguments["torrent-duplicate"] || data.arguments["torrent_duplicate"];
+						if (added) {
+							callback(added);
+						} else if (dupe) {
+							callback({ status: "duplicate", torrent: dupe });
 						}
-						// 重复的种子
-						else if (data.arguments["torrent-duplicate"]) {
-							callback({
-								status: "duplicate",
-								torrent: data.arguments["torrent-duplicate"]
-							});
-						}
-
 					}
 					break;
-
-					// 重复的种子
 				case "duplicate torrent":
 				default:
-					if (callback) {
-						callback(data.result);
-					}
+					if (callback) { callback(data.result); }
 					break;
-
 			}
 		});
 	},
+
 	// 从文件内容增加种子
 	addTorrentFromFile: function(file, savePath, paused, callback, filecount) {
 		var fileReader = new FileReader();
-
 		fileReader.onload = function(e) {
 			var contents = e.target.result;
 			var key = "base64,";
 			var index = contents.indexOf(key);
-			if (index == -1) {
-				return;
-			}
+			if (index == -1) { return; }
 			var metainfo = contents.substring(index + key.length);
 
 			transmission.exec({
@@ -221,40 +317,171 @@ var transmission = {
 				}
 			}, function(data) {
 				switch (data.result) {
-					// 添加成功
 					case "success":
 						if (callback) {
-							if(data.arguments["torrent-added"] != null)
-								callback(data.arguments["torrent-added"], filecount);
-							else if (data.arguments["torrent-duplicate"] != null)
-								callback({
-									status: "duplicate",
-									torrent: data.arguments["torrent-duplicate"]
-									}, filecount);
+							var added = data.arguments["torrent-added"] || data.arguments["torrent_added"];
+							var dupe  = data.arguments["torrent-duplicate"] || data.arguments["torrent_duplicate"];
+							if (added != null)
+								callback(added, filecount);
+							else if (dupe != null)
+								callback({ status: "duplicate", torrent: dupe }, filecount);
 							else
 								callback("error");
 						}
 						break;
-						// 重复的种子
 					case "duplicate torrent":
-						if (callback) {
-							callback("duplicate");
-						}
+						if (callback) { callback("duplicate"); }
 						break;
-
 				}
 			});
-		}
+		};
 		fileReader.readAsDataURL(file);
-
 	},
+
 	_onTorrentCountChange: function() {
 		this.torrents.loadSimpleInfo = false;
 		if (this.on.torrentCountChange) {
 			this.on.torrentCountChange();
 		}
 	},
-	// 删除种子
+
+	// ─── tracker management (version-aware) ──────────────────────────────────
+	// Transmission 4.0+ (RPC v17) deprecated trackerAdd/trackerRemove/trackerReplace
+	// in favour of the unified "trackerList" string field.
+
+	// Add one or more tracker URLs to a single torrent.
+	// urls: Array of tracker URL strings.
+	addTrackers: function(torrentId, urls, callback) {
+		var me = this;
+		if (me.rpcVersion >= 17) {
+			// Fetch current trackerList, append new URLs, then set.
+			me.exec({
+				method: "torrent-get",
+				arguments: { fields: ["id", "trackerList"], ids: [torrentId] }
+			}, function(data) {
+				if (data.result !== "success") {
+					if (callback) callback(false);
+					return;
+				}
+				var torrent = data.arguments.torrents[0];
+				var existing = torrent.trackerList || torrent.tracker_list || "";
+				// Append new trackers (each on its own line, blank line as tier separator)
+				var newList = existing.trim();
+				for (var i = 0; i < urls.length; i++) {
+					if (newList) newList += "\n";
+					newList += urls[i];
+				}
+				me.exec({
+					method: "torrent-set",
+					arguments: { ids: [torrentId], trackerList: newList }
+				}, function(d) {
+					if (callback) callback(d.result === "success");
+				});
+			});
+		} else {
+			// Legacy: trackerAdd accepts an array of URLs
+			me.exec({
+				method: "torrent-set",
+				arguments: { ids: torrentId, trackerAdd: urls }
+			}, function(d) {
+				if (callback) callback(d.result === "success");
+			});
+		}
+	},
+
+	// Remove a single tracker from a torrent identified by its announce URL.
+	removeTracker: function(torrentId, trackerUrl, callback) {
+		var me = this;
+		if (me.rpcVersion >= 17) {
+			me.exec({
+				method: "torrent-get",
+				arguments: { fields: ["id", "trackerList"], ids: [torrentId] }
+			}, function(data) {
+				if (data.result !== "success") {
+					if (callback) callback(false);
+					return;
+				}
+				var torrent = data.arguments.torrents[0];
+				var existing = torrent.trackerList || torrent.tracker_list || "";
+				var lines = existing.split("\n").filter(function(l) {
+					return l.trim() !== trackerUrl.trim();
+				});
+				me.exec({
+					method: "torrent-set",
+					arguments: { ids: [torrentId], trackerList: lines.join("\n") }
+				}, function(d) {
+					if (callback) callback(d.result === "success");
+				});
+			});
+		} else {
+			// Legacy: need the numeric tracker id; look it up from trackerStats
+			var torrent = me.torrents.all[torrentId];
+			if (!torrent) { if (callback) callback(false); return; }
+			var trackerStats = torrent.trackerStats || torrent.tracker_stats || [];
+			var trackerId = null;
+			for (var i = 0; i < trackerStats.length; i++) {
+				if (trackerStats[i].announce === trackerUrl) {
+					trackerId = trackerStats[i].id;
+					break;
+				}
+			}
+			if (trackerId === null) { if (callback) callback(false); return; }
+			me.exec({
+				method: "torrent-set",
+				arguments: { ids: [torrentId], trackerRemove: [trackerId] }
+			}, function(d) {
+				if (callback) callback(d.result === "success");
+			});
+		}
+	},
+
+	// Replace oldUrl with newUrl across all torrents that have it.
+	replaceTracker: function(torrentId, oldUrl, newUrl, callback) {
+		var me = this;
+		if (me.rpcVersion >= 17) {
+			me.exec({
+				method: "torrent-get",
+				arguments: { fields: ["id", "trackerList"], ids: [torrentId] }
+			}, function(data) {
+				if (data.result !== "success") {
+					if (callback) callback(false);
+					return;
+				}
+				var torrent = data.arguments.torrents[0];
+				var existing = torrent.trackerList || torrent.tracker_list || "";
+				var updated = existing.split("\n").map(function(line) {
+					return line.trim() === oldUrl.trim() ? newUrl : line;
+				}).join("\n");
+				me.exec({
+					method: "torrent-set",
+					arguments: { ids: [torrentId], trackerList: updated }
+				}, function(d) {
+					if (callback) callback(d.result === "success", torrentId);
+				});
+			});
+		} else {
+			// Legacy trackerReplace: [trackerId, newAnnounce]
+			var torrent = me.torrents.all[torrentId];
+			if (!torrent) { if (callback) callback(false); return; }
+			var trackerStats = torrent.trackerStats || torrent.tracker_stats || [];
+			var trackerId = null;
+			for (var i = 0; i < trackerStats.length; i++) {
+				if (trackerStats[i].announce === oldUrl) {
+					trackerId = trackerStats[i].id;
+					break;
+				}
+			}
+			if (trackerId === null) { if (callback) callback(false); return; }
+			me.exec({
+				method: "torrent-set",
+				arguments: { ids: [torrentId], trackerReplace: [trackerId, newUrl] }
+			}, function(d) {
+				if (callback) callback(d.result === "success", torrentId);
+			});
+		}
+	},
+
+	// ─── other methods ────────────────────────────────────────────────────────
 	removeTorrent: function(ids, removeData, callback) {
 		this.exec({
 			method: "torrent-remove",
@@ -263,40 +490,28 @@ var transmission = {
 				"delete-local-data": removeData
 			}
 		}, function(data) {
-			if (callback)
-				callback(data.result);
+			if (callback) callback(data.result);
 		});
 	},
-	// 獲取指定目錄的大小
+
 	getFreeSpace: function(path, callback) {
 		this.exec({
 			method: "free-space",
-			arguments: {
-				"path": path
-			}
+			arguments: { "path": path }
 		}, function(result) {
-			if (callback)
-				callback(result);
+			if (callback) callback(result);
 		});
 	},
-	// 更新黑名單
+
 	updateBlocklist: function(callback) {
-		this.exec({
-			method: "blocklist-update"
-		}, function(data) {
-			if (callback)
-				callback(data.result);
+		this.exec({ method: "blocklist-update" }, function(data) {
+			if (callback) callback(data.result);
 		});
 	},
-	// 重命名指定的种子文件/目录名称
-	// torrentId 		只能指定一个
-	// oldpath 			原文件路径或目录，如：opencd/info.txt 或 opencd/cd1
-	// newname			新的文件或目录名，如：into1.txt 或 disc1
+
 	renameTorrent: function(torrentId, oldpath, newname, callback) {
 		var torrent = this.torrents.all[torrentId];
-		if (!torrent)
-			return false;
-
+		if (!torrent) return false;
 		this.exec({
 			method: "torrent-rename-path",
 			arguments: {
@@ -305,39 +520,13 @@ var transmission = {
 				name: newname
 			}
 		}, function(data) {
-			if (callback)
-				callback(data);
+			if (callback) callback(data);
 		});
 	},
-	// 关闭连接？		
+
 	closeSession: function(callback) {
-		this.exec({
-			method: "session-close"
-		}, function(result) {
-			if (callback)
-				callback(result);
+		this.exec({ method: "session-close" }, function(result) {
+			if (callback) callback(result);
 		});
 	}
 };
-
-/*
-(function($){
-	var items = $("script");
-	var index = -1;
-	for (var i=0;i<items.length ;i++ )
-	{
-		var src = items[i].src.toLowerCase();
-		index = src.indexOf("min/transmission.js");
-		if (index!=-1)
-		{
-			// 种子相关信息
-			$.getScript("script/min/transmission.torrents.js");
-			break;
-		}
-	}
-	if (index==-1)
-	{
-		$.getScript("script/transmission.torrents.js");
-	}
-})(jQuery);
-*/

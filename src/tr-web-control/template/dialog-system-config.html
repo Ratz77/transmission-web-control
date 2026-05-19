@@ -854,25 +854,26 @@
             }, function (data) {
               if (data.result == 'success') {
                 // Once the settings are successful, regain the current parameters
-                transmission.exec({
-                  method: 'session-get'
-                }, function (data) {
-                  if (data.result == 'success') {
-                    system.serverConfig = data.arguments;
-                    $('#status_version').html(system.lang.statusbar.version + data.arguments['version']);
-                    if (data.arguments['alt-speed-enabled'] == true) {
+                // Use transmission.getSession() so the response is normalised
+                // (snake_case → hyphenated) for both old and new Transmission versions.
+                transmission.getSession(function (args) {
+                  if (args) {
+                    system.serverConfig = args;
+                    $('#status_version').html(system.lang.statusbar.version + args['version']);
+                    var altEn = args['alt-speed-enabled'];
+                    if (altEn == true) {
                       system.panel.toolbar.find('#toolbar_alt_speed').linkbutton({
-                        iconCls: 'icon-alt-speed-true'
+                        iconCls: 'iconfont tr-icon-woniu'
                       });
                       $('#status_alt_speed').show();
                     } else {
                       system.panel.toolbar.find('#toolbar_alt_speed').linkbutton({
-                        iconCls: 'icon-alt-speed-false'
+                        iconCls: 'iconfont tr-icon-rocket'
                       });
                       $('#status_alt_speed').hide();
                     }
 
-                    system.downloadDir = data.arguments['download-dir'];
+                    system.downloadDir = args['download-dir'] || '';
                     saveLocalData();
 
                     if (cuslang != system.lang.name) {
