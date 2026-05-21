@@ -6,8 +6,7 @@ Fork activo de [ronggang/transmission-web-control](https://github.com/ronggang/t
 Mejora la interfaz web de Transmission añadiendo compatibilidad con Transmission 4.x (RPC v17/v18) y nuevas funcionalidades.
 
 **Repo:** https://github.com/Ratz77/transmission-web-control  
-**Rama principal:** master  
-**Ruta local:** `C:\Users\juanmanuel.bejerano\Desktop\Codex\twc-fork\`
+**Rama principal:** master
 
 ---
 
