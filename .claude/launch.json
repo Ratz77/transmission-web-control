@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "twc-mobile",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-l", "3131", "src"],
+      "port": 3131
+    }
+  ]
+}
