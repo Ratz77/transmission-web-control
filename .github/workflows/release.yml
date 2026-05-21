@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        run: |
+          CURRENT_TAG="${{ github.ref_name }}"
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${CURRENT_TAG}$" | head -1)
+
+          {
+            if [ -n "$PREV_TAG" ]; then
+              echo "## Cambios desde \`${PREV_TAG}\`"
+              echo ""
+              echo "### Fixes y mejoras"
+              git log "${PREV_TAG}..${CURRENT_TAG}" \
+                --pretty=format:"- %s" \
+                --no-merges
+            else
+              echo "## Primera release del fork mantenido"
+              echo ""
+              echo "Fork activo de [ronggang/transmission-web-control](https://github.com/ronggang/transmission-web-control) (archivado en 2025)."
+              echo ""
+              echo "### Correcciones respecto al original"
+              echo ""
+              echo "| Problema | Fix |"
+              echo "|---|---|"
+              echo "| Script de instalación copiaba ficheros a ruta incorrecta | \`install()\` reescrita para copiar desde \`src/\` directamente a \`WEB_FOLDER\` |"
+              echo "| Script falla en Transmission 4.0+ (\`/web\` no existe) | Detección automática de \`public_html\` vs \`web\` |"
+              echo "| \`trackerAdd\`/\`trackerReplace\` deprecados en RPC v17 | Uso automático de \`trackerList\` en v17+ |"
+              echo "| Campos snake_case en RPC v18 rompen la UI | Capa de normalización snake_case → camelCase |"
+              echo "| \`fields.base\` solo pedía camelCase → datos vacíos en Tr 4.1+ | Se añaden equivalentes snake_case a todos los arrays de campos |"
+              echo "| Valor de cifrado \`\"allowed\"\` no reconocido | Normalizado a \`\"tolerated\"\` internamente |"
+              echo "| \`cache-size-mb\` renombrado en 4.1+ | Mapeado al campo legacy |"
+              echo "| Crash en trackers con \`lastAnnounceResult\` nulo | Guard defensivo añadido |"
+              echo "| index.html cargaba JS minificado desactualizado | Cambiado a cargar los fuentes directamente |"
+              echo ""
+              echo "### Nuevas funcionalidades"
+              echo ""
+              echo "- **Interfaz móvil**: subida de ficheros \`.torrent\` desde el móvil"
+              echo "- **Docker**: \`docker-compose.yml\` y \`Dockerfile\` incluidos"
+              echo ""
+              echo "### Versiones soportadas"
+              echo ""
+              echo "| Transmission | RPC | Estado |"
+              echo "|---|---|---|"
+              echo "| 2.40 – 3.00 | v14–v16 | ✅ |"
+              echo "| 4.0.x | v17 | ✅ |"
+              echo "| 4.1.x | v18 | ✅ |"
+              echo "| 4.2.x | v18.1 | ✅ |"
+            fi
+          } > release-notes.md
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "Transmission Web Control ${{ github.ref_name }}" \
+            --notes-file release-notes.md
