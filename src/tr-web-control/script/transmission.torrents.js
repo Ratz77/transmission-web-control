@@ -15,22 +15,45 @@ transmission.torrents = {
 	activeTorrentCount: 0,
 	pausedTorrentCount: 0,
 	fields: {
-		// RPC v16+ added "labels"; v17+ added "trackerList","file-count","percentComplete"
-		// We request both old camelCase and snake_case names so the server returns whichever it supports.
+		// We request both camelCase (RPC ≤v17) and snake_case (RPC v18+) names.
+		// Unknown field names are silently ignored by the server, so this is safe
+		// across all Transmission versions.
 		base: [
+			// camelCase / hyphenated — Transmission ≤4.0 (RPC ≤v17)
 			"id","name","status","hashString","totalSize","percentDone","addedDate",
 			"trackerStats","leftUntilDone","rateDownload","rateUpload","recheckProgress",
 			"peersGettingFromUs","peersSendingToUs","uploadRatio","uploadedEver",
 			"downloadedEver","downloadDir","error","errorString","doneDate",
-			"queuePosition","activityDate","labels","trackerList","percentComplete","file-count"
+			"queuePosition","activityDate","labels","trackerList","percentComplete","file-count",
+			// snake_case equivalents — Transmission 4.1+ (RPC v18); ignored by older versions
+			"hash_string","total_size","percent_done","added_date","tracker_stats",
+			"left_until_done","rate_download","rate_upload","recheck_progress",
+			"peers_getting_from_us","peers_sending_to_us","upload_ratio","uploaded_ever",
+			"downloaded_ever","download_dir","error_string","done_date",
+			"queue_position","activity_date","tracker_list","percent_complete","file_count"
 		].join(","),
 		status: [
+			// camelCase (RPC ≤v17)
 			"id","name","status","totalSize","percentDone","trackerStats","leftUntilDone",
 			"rateDownload","rateUpload","recheckProgress","peersGettingFromUs",
 			"peersSendingToUs","uploadRatio","uploadedEver","downloadedEver","error",
-			"errorString","doneDate","queuePosition","activityDate","labels"
+			"errorString","doneDate","queuePosition","activityDate","labels",
+			// snake_case (RPC v18+)
+			"total_size","percent_done","tracker_stats","left_until_done","rate_download",
+			"rate_upload","recheck_progress","peers_getting_from_us","peers_sending_to_us",
+			"upload_ratio","uploaded_ever","downloaded_ever","error_string","done_date",
+			"queue_position","activity_date"
 		].join(","),
-		config: "id,name,downloadLimit,downloadLimited,peer-limit,seedIdleLimit,seedIdleMode,seedRatioLimit,seedRatioMode,uploadLimit,uploadLimited"
+		config: [
+			// camelCase (RPC ≤v17)
+			"id","name","downloadLimit","downloadLimited","peer-limit",
+			"seedIdleLimit","seedIdleMode","seedRatioLimit","seedRatioMode",
+			"uploadLimit","uploadLimited",
+			// snake_case (RPC v18+)
+			"download_limit","download_limited","peer_limit",
+			"seed_idle_limit","seed_idle_mode","seed_ratio_limit","seed_ratio_mode",
+			"upload_limit","upload_limited"
+		].join(",")
 	},
 	// List of all the torrents that have been acquired
 	datas: {},
@@ -113,12 +136,16 @@ transmission.torrents = {
 			primary_mime_type:    'primaryMimeType',
 			download_limit:       'downloadLimit',
 			download_limited:     'downloadLimited',
+			peer_limit:           'peer-limit',
 			seed_idle_limit:      'seedIdleLimit',
 			seed_idle_mode:       'seedIdleMode',
 			seed_ratio_limit:     'seedRatioLimit',
 			seed_ratio_mode:      'seedRatioMode',
 			upload_limit:         'uploadLimit',
-			upload_limited:       'uploadLimited'
+			upload_limited:       'uploadLimited',
+			piece_count:          'pieceCount',
+			piece_size:           'pieceSize',
+			date_created:         'dateCreated'
 		};
 		for (var sk in map) {
 			var ck = map[sk];

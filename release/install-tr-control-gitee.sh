@@ -189,8 +189,8 @@ install() {
 		unpack
 
 		showLog "$MSG_PACK_COPYING"
-		# 复制文件到
-		cp -r "$TMP_FOLDER/transmission-web-control-$VERSION/src/." "$WEB_FOLDER/"
+		local dir_version="${VERSION#v}"
+		cp -r "$TMP_FOLDER/transmission-web-control-$dir_version/src/." "$WEB_FOLDER/"
 		# 设置权限
 		setPermissions "$WEB_FOLDER"
 		# 安装完成
@@ -200,25 +200,20 @@ install() {
 	elif [ $INSTALL_TYPE = 1 -o $INSTALL_TYPE = 3 ]; then
 		# 下载安装包
 		download
-		# 创建web文件夹，从 20171014 之后，打包文件不包含web目录，直接打包为src下所有文件
-		mkdir $HTML_FOLDER_NAME
-		
-		# 解压缩包
-		unpack "$HTML_FOLDER_NAME"
-		
+		unpack
+
 		showLog "$MSG_PACK_COPYING"
-		# 复制文件到
-		cp -r $HTML_FOLDER_NAME "$ROOT_FOLDER"
+		cp -r "$TMP_FOLDER/transmission-web-control-master/src/." "$WEB_FOLDER/"
 		# 设置权限
-		setPermissions "$ROOT_FOLDER"
+		setPermissions "$WEB_FOLDER"
 		# 安装完成
 		installed
 
 	elif [ $INSTALL_TYPE = 2 ]; then
 		# 下载安装包
 		download
-		# 解压缩包
-		unpack "$TRANSMISSION_WEB_HOME"
+		unpack
+		cp -r "$TMP_FOLDER/transmission-web-control-master/src/." "$TRANSMISSION_WEB_HOME/"
 		# 设置权限
 		setPermissions "$TRANSMISSION_WEB_HOME"
 		# 安装完成

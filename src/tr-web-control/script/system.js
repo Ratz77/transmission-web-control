@@ -2642,10 +2642,16 @@ var system = {
 			//this.panel.attribute.panel({iconCls:"icon-loading"});
 			var torrent = transmission.torrents.all[id];
 			torrent.infoIsLoading = true;
-			var fields = "fileStats,trackerStats,peers,leftUntilDone,status,rateDownload,rateUpload,uploadedEver,uploadRatio,error,errorString,pieces,pieceCount,pieceSize";
+			// Request both camelCase (RPC ≤v17) and snake_case (RPC v18+) field names.
+			// Unknown names are silently ignored by the server.
+			var fields = "fileStats,file_stats,trackerStats,tracker_stats,peers," +
+				"leftUntilDone,left_until_done,status,rateDownload,rate_download," +
+				"rateUpload,rate_upload,uploadedEver,uploaded_ever," +
+				"uploadRatio,upload_ratio,error,errorString,error_string," +
+				"pieces,pieceCount,piece_count,pieceSize,piece_size";
 			// If this is the first time to load this torrent information, load more information
 			if (!torrent.moreInfosTag) {
-				fields += ",files,trackers,comment,dateCreated,creator,downloadDir";
+				fields += ",files,trackers,comment,dateCreated,date_created,creator,downloadDir,download_dir";
 			}
 
 			// Gets the list of files

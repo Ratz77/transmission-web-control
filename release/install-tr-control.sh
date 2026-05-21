@@ -229,22 +229,26 @@ install() {
 		download
 		unpack
 		showLog "$MSG_PACK_COPYING"
-		cp -r "$TMP_FOLDER/transmission-web-control-$VERSION/src/." "$WEB_FOLDER/"
+		# GitHub strips the leading 'v' from tag names when naming the archive directory
+		# e.g. tag v1.6.1 → transmission-web-control-1.6.1/
+		local dir_version="${VERSION#v}"
+		cp -r "$TMP_FOLDER/transmission-web-control-$dir_version/src/." "$WEB_FOLDER/"
 		setPermissions "$WEB_FOLDER"
 		installed
 
 	elif [ $INSTALL_TYPE = 1 ] || [ $INSTALL_TYPE = 3 ]; then
 		download
-		mkdir -p "$HTML_FOLDER_NAME"
-		unpack "$HTML_FOLDER_NAME"
+		# Extract master branch archive; GitHub names it transmission-web-control-master/
+		unpack
 		showLog "$MSG_PACK_COPYING"
-		cp -r "$HTML_FOLDER_NAME" "$ROOT_FOLDER"
-		setPermissions "$ROOT_FOLDER"
+		cp -r "$TMP_FOLDER/transmission-web-control-master/src/." "$WEB_FOLDER/"
+		setPermissions "$WEB_FOLDER"
 		installed
 
 	elif [ $INSTALL_TYPE = 2 ]; then
 		download
-		unpack "$TRANSMISSION_WEB_HOME"
+		unpack
+		cp -r "$TMP_FOLDER/transmission-web-control-master/src/." "$TRANSMISSION_WEB_HOME/"
 		setPermissions "$TRANSMISSION_WEB_HOME"
 		installed
 
