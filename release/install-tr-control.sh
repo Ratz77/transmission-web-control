@@ -33,7 +33,8 @@ MSG_USE_WEB_HOME="Use TRANSMISSION_WEB_HOME Variable: $TRANSMISSION_WEB_HOME"
 MSG_AVAILABLE="Available"
 MSG_TRY_SPECIFIED_VERSION="Attempting to specify version: "
 MSG_PACK_COPYING="Copying installation package..."
-MSG_WEB_PATH_IS_MISSING="ERROR : Transmisson WEB UI Folder is missing, Please confirm Transmisson is installed."
+MSG_WEB_PATH_IS_MISSING="ERROR : Transmission WEB UI Folder is missing, Please confirm Transmission is installed."
+MSG_CUSTOM_UI_NOT_INSTALLED="Custom UI not installed in this folder, nothing to revert."
 MSG_PACK_IS_EXIST=" Already exist, whether to download again? (y/n)"
 MSG_SIKP_DOWNLOAD="\nSkip download, preparing to install"
 MSG_DOWNLOADING="Transmission Web Control Is Downloading..."
@@ -158,7 +159,7 @@ main() {
 	begin
 	initValues
 	install
-	clear
+	cleanup
 }
 
 # ── Find the web UI directory ─────────────────────────────────────────────────
@@ -272,7 +273,7 @@ download() {
 			flag="y"
 		fi
 		if [ "$flag" = "y" ] || [ "$flag" = "Y" ]; then
-			rm "$PACK_NAME"
+			rm "$TMP_FOLDER/$PACK_NAME"
 		else
 			showLog "$MSG_SIKP_DOWNLOAD"
 			return 0
@@ -318,9 +319,9 @@ showLog() {
 unpack() {
 	showLog "$MSG_PACK_EXTRACTING"
 	if [ "$1" != "" ]; then
-		tar -xzf "$PACK_NAME" -C "$1"
+		tar -xzf "$TMP_FOLDER/$PACK_NAME" -C "$1"
 	else
-		tar -xzf "$PACK_NAME"
+		tar -xzf "$TMP_FOLDER/$PACK_NAME" -C "$TMP_FOLDER"
 	fi
 	if [ ! -f "$WEB_FOLDER/$ORG_INDEX_FILE" ] && [ -f "$WEB_FOLDER/$INDEX_FILE" ]; then
 		mv "$WEB_FOLDER/$INDEX_FILE" "$WEB_FOLDER/$ORG_INDEX_FILE"
@@ -330,10 +331,10 @@ unpack() {
 	fi
 }
 
-clear() {
+cleanup() {
 	showLog "$MSG_PACK_CLEANING_UP"
-	[ -f "$PACK_NAME"   ] && rm "$PACK_NAME"
-	[ -d "$TMP_FOLDER"  ] && rm -rf "$TMP_FOLDER"
+	[ -f "$TMP_FOLDER/$PACK_NAME" ] && rm "$TMP_FOLDER/$PACK_NAME"
+	[ -d "$TMP_FOLDER"            ] && rm -rf "$TMP_FOLDER"
 	showLog "$MSG_DONE"
 	end
 }
@@ -411,7 +412,7 @@ getTransmissionPath() {
 			ROOT_FOLDER="/usr/local/share/transmission"
 		fi
 
-		# Synology NAS – version-aware folder detection (Tr 2.x uses web, 3.x+ uses public_html)
+		# Synology NAS – version-aware folder detection (Tr ≤3.x uses web, ≥4.0 uses public_html)
 		if [ -f "/etc/synoinfo.conf" ]; then
 			TRANSMISSION_REMOTE="/var/packages/transmission/target/bin/transmission-remote"
 			if [ -x "$TRANSMISSION_REMOTE" ]; then
@@ -419,7 +420,7 @@ getTransmissionPath() {
 				tr_version=$("$TRANSMISSION_REMOTE" -V 2>&1 | cut -d " " -f 2)
 				showLog "transmission version: $tr_version"
 				local tr_major=${tr_version%%.*}
-				if [ -n "$tr_major" ] && [ "$tr_major" -ge 3 ] 2>/dev/null; then
+				if [ -n "$tr_major" ] && [ "$tr_major" -ge 4 ] 2>/dev/null; then
 					HTML_FOLDER_NAME="public_html"
 				else
 					HTML_FOLDER_NAME="web"
@@ -494,7 +495,7 @@ revertOriginalUI() {
 			mv "$WEB_FOLDER/$ORG_INDEX_FILE" "$WEB_FOLDER/$INDEX_FILE"
 			showLog "$MSG_REVERT_COMPLETE"
 		else
-			showLog "$MSG_WEB_PATH_IS_MISSING"
+			showLog "$MSG_CUSTOM_UI_NOT_INSTALLED"
 			sleep 2
 			showMainMenu
 		fi

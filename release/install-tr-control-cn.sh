@@ -35,7 +35,7 @@ MSG_USE_WEB_HOME="使用 TRANSMISSION_WEB_HOME 变量: $TRANSMISSION_WEB_HOME"
 MSG_AVAILABLE="可用"
 MSG_TRY_SPECIFIED_VERSION="正在尝试指定版本"
 MSG_PACK_COPYING="正在复制安装包..."
-MSG_WEB_PATH_IS_MISSING="错误 : Transmisson WEB 目录不存在，请确认是否已安装 Transmisson 。"
+MSG_WEB_PATH_IS_MISSING="错误 : Transmission WEB 目录不存在，请确认是否已安装 Transmission 。"
 MSG_PACK_IS_EXIST=" 已存在，是否重新下载？（y/n）"
 MSG_SIKP_DOWNLOAD="\n跳过下载，正在准备安装"
 MSG_DOWNLOADING="正在下载 Transmission Web Control..."
@@ -144,7 +144,7 @@ main() {
 	# 安装
 	install
 	# 清理
-	clear
+	cleanup
 }
 
 # 查找Web目录
@@ -244,7 +244,7 @@ download() {
 		fi
 
 		if [ "$flag" = "y" -o "$flag" = "Y" ] ; then
-			rm "$PACK_NAME"
+			rm "$TMP_FOLDER/$PACK_NAME"
 		else
 			showLog "$MSG_SIKP_DOWNLOAD"
 			return 0
@@ -287,9 +287,9 @@ showLog() {
 unpack() {
 	showLog "$MSG_PACK_EXTRACTING"
 	if [ "$1" != "" ]; then
-		tar -xzf "$PACK_NAME" -C "$1"
+		tar -xzf "$TMP_FOLDER/$PACK_NAME" -C "$1"
 	else
-		tar -xzf "$PACK_NAME"
+		tar -xzf "$TMP_FOLDER/$PACK_NAME" -C "$TMP_FOLDER"
 	fi
 	# 如果之前没有安装过，则先将原系统的文件改为
 	if [ ! -f "$WEB_FOLDER/$ORG_INDEX_FILE" -a -f "$WEB_FOLDER/$INDEX_FILE" ]; then
@@ -303,11 +303,11 @@ unpack() {
 }
 
 # 清除工作
-clear() {
+cleanup() {
 	showLog "$MSG_PACK_CLEANING_UP"
-	if [ -f "$PACK_NAME" ]; then
+	if [ -f "$TMP_FOLDER/$PACK_NAME" ]; then
 		# 删除安装包
-		rm "$PACK_NAME"
+		rm "$TMP_FOLDER/$PACK_NAME"
 	fi
 
 	if [ -d "$TMP_FOLDER" ]; then
@@ -438,7 +438,7 @@ getTransmissionPath() {
 			ROOT_FOLDER="/usr/local/share/transmission"
 		fi
 
-		# 群晖 – Tr 2.x 使用 web，3.x+ 使用 public_html
+		# 群晖 – Tr ≤3.x 使用 web，≥4.0 使用 public_html
 		if [ -f "/etc/synoinfo.conf" ]; then
 			TRANSMISSION_REMOTE="/var/packages/transmission/target/bin/transmission-remote"
 			if [ -x "$TRANSMISSION_REMOTE" ]; then
@@ -446,7 +446,7 @@ getTransmissionPath() {
 				tr_version=$("$TRANSMISSION_REMOTE" -V 2>&1 | cut -d " " -f 2)
 				showLog "transmission version: $tr_version"
 				local tr_major=${tr_version%%.*}
-				if [ -n "$tr_major" ] && [ "$tr_major" -ge 3 ] 2>/dev/null; then
+				if [ -n "$tr_major" ] && [ "$tr_major" -ge 4 ] 2>/dev/null; then
 					HTML_FOLDER_NAME="public_html"
 				else
 					HTML_FOLDER_NAME="web"

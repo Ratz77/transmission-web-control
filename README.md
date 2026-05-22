@@ -62,19 +62,19 @@ bash install-tr-control.sh auto
 
 ### Opción A — docker-compose (recomendado)
 
-Monta el directorio `src/` directamente en el contenedor. Cualquier cambio en los ficheros se refleja sin reconstruir la imagen.
+Construye la imagen desde el `Dockerfile` y monta `src/` para que los cambios se reflejen sin reconstruir:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 La interfaz estará disponible en `http://localhost:9091`.
 
 Ajusta `TZ` en [`docker-compose.yml`](docker-compose.yml) con tu zona horaria si lo necesitas.
 
-### Opción B — imagen propia (Dockerfile)
+> **Nota:** el `docker-compose.yml` incluye `build: .` para que construya la imagen local automáticamente. No es necesario ejecutar `docker build` por separado.
 
-Construye una imagen autocontenida con la UI incluida:
+### Opción B — imagen standalone (sin docker-compose)
 
 ```bash
 docker build -t transmission-web-control .
@@ -103,8 +103,8 @@ Transmission debe instalarse por separado: https://www.transmissionbt.com/
 
 ## Changelog
 
-Ver [CHANGELOG.md](CHANGELOG.md) para el historial de cambios del proyecto original.
-Los cambios de este fork están documentados en los mensajes de commit.
+Ver [CHANGELOG-EN.md](CHANGELOG-EN.md) para el historial de cambios de este fork.
+Ver [CHANGELOG.md](CHANGELOG.md) para el historial del proyecto original.
 
 ## Créditos
 

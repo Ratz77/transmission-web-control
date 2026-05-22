@@ -1,6 +1,7 @@
 services:
   transmission:
-    image: lscr.io/linuxserver/transmission:latest
+    build: .
+    image: transmission-web-control:latest
     container_name: transmission
     environment:
       - PUID=1000

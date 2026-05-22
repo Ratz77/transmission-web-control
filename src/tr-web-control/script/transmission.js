@@ -87,6 +87,7 @@ var transmission = {
 			type: "POST",
 			url: this.fullpath,
 			dataType: 'json',
+			timeout: 15000,
 			data: JSON.stringify(data),
 			success: function(resultData, textStatus) {
 				if (callback) {

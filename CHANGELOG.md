@@ -1,5 +1,21 @@
 ﻿# 更新日志
 ## [English](CHANGELOG-EN.md)
+
+### 2026.05.22 v1.3.1-fork
+
+**Bug 修复（fork 版本）**
+
+* **Docker** — `docker-compose.yml` 新增 `build: .`，现在会自动构建包含自定义 UI 的镜像；修复前使用的是上游基础镜像，若未手动挂载 `./src` 卷则自定义界面不会加载。
+* **Docker** — `Dockerfile`：将 `ENV TRANSMISSION_WEB_HOME` 移至 `COPY` 之前（正确的声明顺序），并补充了缺失的 `EXPOSE 9091 / 51413 / 51413/udp`。
+* **安装脚本（3 个变体）** — 群晖 NAS 检测使用 `>= 3` 作为 `public_html` 的版本边界，但 `web → public_html` 的重命名发生在 Transmission **4.0**，而非 3.0。已修正为 `>= 4`。影响：`install-tr-control.sh`、`install-tr-control-cn.sh`、`install-tr-control-gitee.sh`。
+* **安装脚本（3 个变体）** — `unpack()` 中 `tar` 使用相对路径（依赖 `download()` 内部 `cd` 的副作用）。现改用显式绝对路径（`$TMP_FOLDER/$PACK_NAME`）。重新下载时的 `rm` 及 `cleanup()` 函数同步修复。
+* **安装脚本（3 个变体）** — 将 `clear()` 重命名为 `cleanup()`，避免与 shell 内建命令 `clear` 冲突。
+* **安装脚本（3 个变体）** — 修正错误信息中的拼写错误：`"Transmisson"` → `"Transmission"`。
+* **安装脚本** — `revertOriginalUI()` 在自定义 UI 目录不存在时显示误导性的 `WEB_PATH_IS_MISSING` 错误；已替换为更准确的 `MSG_CUSTOM_UI_NOT_INSTALLED`。
+* **transmission.js** — 为 `exec()` 中所有 RPC AJAX 调用添加 `timeout: 15000`（15 秒）。修复前，若 daemon 不可达，请求可能无限期挂起且无任何用户反馈。
+
+---
+
 ### 2018.03.30 v1.5.1-update2
 * 修复
 	* 修复种子列表字段顺序调整后，格式显示错位的BUG; Fixed #169 #170

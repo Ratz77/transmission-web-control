@@ -1,4 +1,20 @@
 ﻿# ChangeLog
+
+### 2026.05.22 v1.3.1-fork
+
+**Bug fixes (fork)**
+
+* **Docker** — `docker-compose.yml` now uses `build: .` so the custom UI image is built automatically; previously it pulled the upstream base image and the custom interface was never loaded unless `./src` was volume-mounted manually.
+* **Docker** — `Dockerfile`: moved `ENV TRANSMISSION_WEB_HOME` before `COPY` (correct declaration order) and added missing `EXPOSE 9091 / 51413 / 51413/udp` statements.
+* **Install script (all 3 variants)** — Synology NAS detection used `>= 3` as the version boundary for `public_html`, but the `web → public_html` rename happened in Transmission **4.0**, not 3.0. Fixed to `>= 4`. Affected: `install-tr-control.sh`, `install-tr-control-cn.sh`, `install-tr-control-gitee.sh`.
+* **Install script (all 3 variants)** — `unpack()` used relative paths for `tar` (relying on a `cd` side-effect inside `download()`). Now uses explicit absolute paths (`$TMP_FOLDER/$PACK_NAME`). Same fix for the re-download `rm` and the `cleanup()` function.
+* **Install script (all 3 variants)** — Renamed `clear()` to `cleanup()` to avoid shadowing the shell built-in `clear` command.
+* **Install script (all 3 variants)** — Fixed typo `"Transmisson"` → `"Transmission"` in error messages.
+* **Install script** — `revertOriginalUI()` showed a misleading `WEB_PATH_IS_MISSING` error when the custom UI directory did not exist; replaced with the more accurate `MSG_CUSTOM_UI_NOT_INSTALLED`.
+* **transmission.js** — Added `timeout: 15000` (15 s) to all RPC AJAX calls in `exec()`. Previously requests could hang indefinitely with no user feedback if the daemon was unreachable.
+
+---
+
 ### 2018.03.30 v1.5.1-update2
 * Fixed
 	* Fix the torrent list to show misplaced bugs; Fixed #169 #170
