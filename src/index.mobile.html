@@ -80,6 +80,7 @@
 		<div data-role="content" style="padding:0px;">
 			<!-- 种子分类列表 -->
 			<div id="content-home" style="padding:15px;">
+				<a href="#" data-role="button" data-icon="plus" data-theme="b" onclick="showAddTorrent();" system-lang="toolbar['add-torrent']">Add Torrent</a>
 				<ul data-role="listview" data-count-theme="e">
 					<li><a href="#" onclick="system.showContent({page:'torrent-list',type:'torrent-list',data:'all'});"><span system-lang="tree.all"></span><span id="count-all" class="ui-li-count" style="display:none;">0</span></a></li>
 					<li><a href="" onclick="system.showContent({page:'torrent-list',type:'torrent-list',data:'downloading'});"><span system-lang="tree.downloading"></span><span id="count-downloading" class="ui-li-count" style="display:none;">0</span></a></li>
